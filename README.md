@@ -5,7 +5,7 @@
 ## 2. Один раз експортуй модель (це може зайняти кілька хвилин)
 
 ```bash
-uvx --from "optimum-intel[openvino]" optimum-cli export openvino --model Qwen/Qwen2.5-1.5B-Instruct --weight-format int4 qwen_npu
+uvx --from "optimum-intel[openvino]" --with datasets optimum-cli export openvino --model Qwen/Qwen2.5-1.5B-Instruct --weight-format int4 qwen_npu
 ```
 
 ## 3. Запусти: `uv run python -m npu_llm`
