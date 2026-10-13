@@ -10,3 +10,7 @@ load_dotenv()
 MODEL_DIR = Path(os.getenv("MODEL_DIR", "models/qwen_npu_sym"))
 SYSTEM_PROMPT = os.getenv("SYSTEM_PROMPT", "You are a helpful assistant. Answer concisely.")
 MAX_NEW_TOKENS = int(os.getenv("MAX_NEW_TOKENS", "200"))
+
+# Platform Configuration
+SUPPORTED_PLATFORMS = ["intel_npu"]
+
