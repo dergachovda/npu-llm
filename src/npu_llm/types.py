@@ -1,6 +1,7 @@
-from dataclasses import dataclass, field
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from typing import Protocol
+
 
 class Pipeline(Protocol):
     """Опис LLM-пайплайна, який використовує програма."""
@@ -13,6 +14,7 @@ class Pipeline(Protocol):
     ) -> str:
         """Генерує текст за промптом і передає фрагменти в streamer."""
         ...
+
 
 @dataclass
 class Session:
@@ -49,17 +51,20 @@ class Session:
         parts.append(f"<|im_start|>user\n{user_text}<|im_end|>\n<|im_start|>assistant\n")
         return "".join(parts)
 
+
 @dataclass
 class StreamStats:
-    """Виводить фрагменти відповіді та збирає час для метрик."""
+    """Збирає фрагменти відповіді та час для метрик."""
 
     import time
+
     start: float = field(default_factory=time.perf_counter)
     first_token_at: float | None = None
     chunks: int = 0
+    full_text: str = ""
 
     def on_chunk(self, text: str) -> None:
-        """Викликається на кожен новий фрагмент тексту.
+        """Збирає фрагменти відповіді.
 
         Args:
             text: Фрагмент відповіді.
@@ -68,4 +73,9 @@ class StreamStats:
             import time
             self.first_token_at = time.perf_counter()
         self.chunks += 1
-        print(text, end="", flush=True)
+        self.full_text += text
+        # We don't print here because the animation thread is managing the line.
+        # The run_turn function will handle the actual streaming print
+        # if we pass the streamer a way to signal the main thread.
+
+

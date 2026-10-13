@@ -8,12 +8,13 @@ if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
-from .types import Session
-from .model_service import available_devices, load_pipeline, warmup
 from .chat_service import run_turn
+from .model_service import available_devices, load_pipeline, warmup
+from .types import Session
 
 EXIT_COMMANDS = {"/exit", "/quit"}
 RESET_COMMAND = "/reset"
+
 
 def main() -> None:
     """Запускає чат: завантажує модель, прогріває її і чекає повідомлень."""
@@ -28,8 +29,8 @@ def main() -> None:
     print("Готово. Пиши повідомлення. /reset очищує історію, /exit виходить.")
     while True:
         try:
-            user_text = input("\nТи: ").strip()
-        except (EOFError, KeyboardInterrupt):
+            user_text = input("\nYou: ").strip()
+        except EOFError, KeyboardInterrupt:
             print()
             break
 
@@ -42,8 +43,9 @@ def main() -> None:
             print("Історію очищено.")
             continue
 
-        print("Бот: ", end="", flush=True)
+        print("Bot: ", end="", flush=True)
         run_turn(pipe, session, user_text)
+
 
 if __name__ == "__main__":
     main()

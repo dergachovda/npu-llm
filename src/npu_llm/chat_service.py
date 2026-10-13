@@ -1,7 +1,8 @@
 import time
+
+from .config import MAX_NEW_TOKENS, SYSTEM_PROMPT
 from .types import Pipeline, Session, StreamStats
 
-from .config import SYSTEM_PROMPT, MAX_NEW_TOKENS
 
 def report(stats: StreamStats, end: float) -> None:
     """Друкує метрики останньої відповіді.
@@ -21,6 +22,7 @@ def report(stats: StreamStats, end: float) -> None:
         f"| фрагментів {stats.chunks}]"
     )
 
+
 def run_turn(pipe: Pipeline, session: Session, user_text: str) -> None:
     """Виконує один обмін повідомленнями та оновлює історію.
 
@@ -29,12 +31,52 @@ def run_turn(pipe: Pipeline, session: Session, user_text: str) -> None:
         session: Поточна історія діалогу.
         user_text: Повідомлення користувача.
     """
+    import itertools
+    import sys
+    from threading import Event, Thread
+
     stats = StreamStats()
-    reply = pipe.generate(
-        session.build_prompt(user_text, SYSTEM_PROMPT),
-        max_new_tokens=MAX_NEW_TOKENS,
-        streamer=stats.on_chunk,
-    )
+    # Animation for bot thinking
+    animation = itertools.cycle(["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠴", "⠼", "⠸", "⠹", "⠙", "⠋"])
+
+    stop_anim = Event()
+
+    def animate():
+        while not stop_anim.is_set():
+            if not stats.full_text:
+                sys.stdout.write(f"\rBot: {next(animation)}")
+                sys.stdout.flush()
+            else:
+                stop_anim.set()
+            time.sleep(0.1)
+
+    anim_thread = Thread(target=animate, daemon=True)
+    anim_thread.start()
+
+    def streaming_handler(text: str) -> None:
+        # If this is the first token, we clear the animation line once
+        if stats.chunks == 0:
+            sys.stdout.write("\rBot: ")
+            sys.stdout.flush()
+
+        # Update stats and print the token immediately
+        stats.on_chunk(text)
+        sys.stdout.write(text)
+        sys.stdout.flush()
+
+        # Signal animation to stop
+        stop_anim.set()
+
+    try:
+        reply = pipe.generate(
+            session.build_prompt(user_text, SYSTEM_PROMPT),
+            max_new_tokens=MAX_NEW_TOKENS,
+            streamer=streaming_handler,
+        )
+    finally:
+        stop_anim.set()
+        anim_thread.join()
+
     end = time.perf_counter()
     print()
     session.add("user", user_text)

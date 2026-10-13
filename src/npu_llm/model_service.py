@@ -7,9 +7,9 @@ import openvino as ov
 import openvino_genai as ov_genai
 import psutil
 
+from .config import MODEL_DIR
 from .types import Pipeline
 
-from .config import MODEL_DIR
 
 def available_devices() -> list[str]:
     """Повертає пристрої, які бачить OpenVINO.
@@ -18,6 +18,7 @@ def available_devices() -> list[str]:
         Назви пристроїв, наприклад ['CPU', 'GPU', 'NPU'].
     """
     return list(ov.Core().available_devices)
+
 
 def build_pipeline(model_dir: Path, device: str) -> Pipeline:
     """Створює LLM-пайплайн на вказаному пристрої.
@@ -32,6 +33,7 @@ def build_pipeline(model_dir: Path, device: str) -> Pipeline:
     # openvino_genai не має анотацій типів, тому приводимо об'єкт до нашого протоколу.
     return cast(Pipeline, ov_genai.LLMPipeline(str(model_dir), device))
 
+
 def rss_mb() -> float:
     """Повертає RAM, яку використовує поточний процес, у мегабайтах.
 
@@ -39,6 +41,7 @@ def rss_mb() -> float:
         Розмір резидентної пам'яті в МБ.
     """
     return psutil.Process().memory_info().rss / 1024**2
+
 
 def load_pipeline(device: str) -> Pipeline:
     """Завантажує модель і показує час та пам'ять.
@@ -62,13 +65,13 @@ def load_pipeline(device: str) -> Pipeline:
     )
     return pipe
 
+
 def warmup(pipe: Pipeline) -> None:
     """Прогріває пайплайн коротким запитом, щоб перший реальний запит був швидшим.
 
     Args:
         pipe: Завантажений пайплайн.
     """
-    from .types import StreamStats
 
     def _ignore(_text: str) -> None:
         pass
